@@ -1,1 +1,223 @@
 
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>جیگرکی سیروس</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#111;color:white;font-family:Tahoma,Arial}
+header{background:linear-gradient(135deg,#8b160e,#ed6a18);padding:28px 16px;text-align:center}
+header h1{margin:0 0 10px;font-size:30px}
+nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+button{border:0;border-radius:10px;padding:12px;background:#e85d16;color:white;font-weight:bold;cursor:pointer}
+nav button{background:#281b19}
+main{max-width:850px;margin:auto;padding:16px}
+.panel{background:#202020;border:1px solid #383838;border-radius:16px;padding:16px;margin:14px 0}
+.food{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #383838;padding:14px 0}
+.food:last-child{border:0}
+.price{color:#ffb15e}
+input,textarea,select{width:100%;padding:12px;margin:6px 0 12px;border-radius:9px;border:1px solid #555;background:#171717;color:white;font:inherit}
+h2{color:#ffad65}
+.small{font-size:13px;color:#bbb}
+.hidden{display:none}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{padding:7px 12px}
+footer{text-align:center;padding:25px;color:#aaa}
+</style>
+</head>
+<body>
+<header>
+<h1>🔥 جیگرکی سیروس 🔥</h1>
+<div>طعم خوشمزه، سفارش آسان!</div>
+<nav>
+<button onclick="show('customer')">🍢 منوی مشتری</button>
+<button onclick="show('admin')">⚙️ مدیریت</button>
+</nav>
+</header>
+
+<main>
+<section id="customer">
+<div class="panel">
+<h2>👋 خوش آمدید!</h2>
+<label>نام و نام خانوادگی</label>
+<input id="customerName" placeholder="نام شما">
+<label>شماره میز یا صندلی</label>
+<input id="tableNo" placeholder="مثلاً میز ۳">
+<label>توضیحات سفارش</label>
+<textarea id="notes" placeholder="توضیحات دلخواه"></textarea>
+</div>
+
+<div class="panel">
+<h2>📋 منوی غذا</h2>
+<div id="menu"></div>
+</div>
+
+<div class="panel">
+<h2>🛒 سبد خرید</h2>
+<div id="cart">سبد خرید خالی است.</div>
+<h3>مبلغ کل: <span id="total">۰</span> تومان</h3>
+<button onclick="submitOrder()">ثبت سفارش</button>
+<p class="small">سفارش در همین مرورگر ذخیره می‌شود؛ هنوز به گوشی دیگری ارسال نمی‌شود.</p>
+</div>
+</section>
+
+<section id="admin" class="hidden">
+<div class="panel">
+<h2>🔐 پنل مدیریت سیروس</h2>
+<p class="small">این نسخه آزمایشی است و رمز ورود ندارد؛ آن را برای استفاده عمومی منتشر نکن.</p>
+</div>
+
+<div class="panel">
+<h2>🍽️ افزودن غذا</h2>
+<input id="newName" placeholder="نام غذا">
+<input id="newPrice" type="number" placeholder="قیمت به تومان">
+<button onclick="addFood()">افزودن به منو</button>
+</div>
+
+<div class="panel">
+<h2>📦 مدیریت قیمت‌ها</h2>
+<div id="editMenu"></div>
+</div>
+
+<div class="panel">
+<h2>🔔 سفارش‌ها</h2>
+<div id="orders">هنوز سفارشی ثبت نشده.</div>
+</div>
+
+<div class="panel">
+<h2>💰 دخل و خرج</h2>
+<input id="cashAmount" type="number" placeholder="مبلغ به تومان">
+<input id="cashNote" placeholder="شرح تراکنش">
+<button onclick="cash('in')">ثبت درآمد</button>
+<button onclick="cash('out')">ثبت هزینه</button>
+<p>درآمد: <b id="income">۰</b> تومان</p>
+<p>هزینه: <b id="expense">۰</b> تومان</p>
+<p>مانده: <b id="balance">۰</b> تومان</p>
+<div id="cashHistory"></div>
+</div>
+
+<div class="panel">
+<h2>💾 پشتیبان‌گیری</h2>
+<button onclick="backup()">دانلود پشتیبان اطلاعات</button>
+<button onclick="resetDemo()">پاک‌کردن اطلاعات آزمایشی</button>
+</div>
+</section>
+</main>
+
+<footer>ساخته شده برای جیگرکی سیروس ❤️</footer>
+
+<script>
+const initialMenu=[
+ {name:"جگر سیخی",price:85000},
+ {name:"دل سیخی",price:75000},
+ {name:"قلوه سیخی",price:70000},
+ {name:"خوش‌گوشت",price:80000},
+ {name:"بال مرغ",price:65000},
+ {name:"نان",price:10000},
+ {name:"نوشابه",price:25000}
+];
+let menu=JSON.parse(localStorage.getItem("js_menu")||"null")||initialMenu;
+let cart={};
+let orders=JSON.parse(localStorage.getItem("js_orders")||"[]");
+let transactions=JSON.parse(localStorage.getItem("js_cash")||"[]");
+
+function save(){
+ localStorage.setItem("js_menu",JSON.stringify(menu));
+ localStorage.setItem("js_orders",JSON.stringify(orders));
+ localStorage.setItem("js_cash",JSON.stringify(transactions));
+}
+function toman(n){return Number(n).toLocaleString("fa-IR")}
+function show(id){
+ document.getElementById("customer").classList.toggle("hidden",id!=="customer");
+ document.getElementById("admin").classList.toggle("hidden",id!=="admin");
+ render();
+}
+function render(){
+ document.getElementById("menu").innerHTML=menu.map((f,i)=>`
+ <div class="food"><div><b>${f.name}</b><br><span class="price">${toman(f.price)} تومان</span></div>
+ <button onclick="changeQty(${i},1)">افزودن +</button></div>`).join("");
+ document.getElementById("editMenu").innerHTML=menu.map((f,i)=>`
+ <div class="food"><div>${f.name}<br><span class="price">${toman(f.price)} تومان</span></div>
+ <button onclick="editFood(${i})">ویرایش</button>
+ <button onclick="removeFood(${i})">حذف</button></div>`).join("");
+ let entries=Object.keys(cart).filter(k=>cart[k]>0);
+ let total=entries.reduce((s,k)=>s+menu[k].price*cart[k],0);
+ document.getElementById("cart").innerHTML=entries.length?entries.map(k=>`
+ <div class="food"><div>${menu[k].name}<br>${toman(menu[k].price*cart[k])} تومان</div>
+ <div class="qty"><button onclick="changeQty(${k},-1)">−</button>${toman(cart[k])}
+ <button onclick="changeQty(${k},1)">+</button></div></div>`).join(""):"سبد خرید خالی است.";
+ document.getElementById("total").textContent=toman(total);
+ document.getElementById("orders").innerHTML=orders.length?orders.slice().reverse().map(o=>`
+ <div class="food"><div><b>${o.name}</b> | میز: ${o.table}<br>${o.items}<br>مبلغ: ${toman(o.total)} تومان<br><span class="small">${o.date}</span></div>
+ <button onclick="finishOrder(${o.id})">تحویل شد</button></div>`).join(""):"هنوز سفارشی ثبت نشده.";
+ let inc=transactions.filter(t=>t.type==="in").reduce((s,t)=>s+t.amount,0);
+ let exp=transactions.filter(t=>t.type==="out").reduce((s,t)=>s+t.amount,0);
+ document.getElementById("income").textContent=toman(inc);
+ document.getElementById("expense").textContent=toman(exp);
+ document.getElementById("balance").textContent=toman(inc-exp);
+ document.getElementById("cashHistory").innerHTML=transactions.slice().reverse().map(t=>
+ `<p>${t.type==="in"?"درآمد":"هزینه"}: ${t.note} — ${toman(t.amount)} تومان</p>`).join("");
+}
+function changeQty(i,n){cart[i]=Math.max(0,(cart[i]||0)+n);render()}
+function addFood(){
+ let name=document.getElementById("newName").value.trim();
+ let price=Number(document.getElementById("newPrice").value);
+ if(!name||price<=0)return alert("نام و قیمت معتبر وارد کن.");
+ menu.push({name,price});save();render();
+ document.getElementById("newName").value="";
+ document.getElementById("newPrice").value="";
+ alert("غذا اضافه شد.");
+}
+function editFood(i){
+ let name=prompt("نام جدید غذا:",menu[i].name);
+ if(name===null)return;
+ let price=prompt("قیمت جدید به تومان:",menu[i].price);
+ if(price===null)return;
+ if(!name.trim()||!Number.isFinite(Number(price))||Number(price)<=0)return alert("اطلاعات معتبر وارد کن.");
+ menu[i]={name:name.trim(),price:Number(price)};save();render();
+}
+function removeFood(i){
+ if(confirm("این غذا از منو حذف شود؟")){menu.splice(i,1);delete cart[i];save();render()}
+}
+function submitOrder(){
+ let name=document.getElementById("customerName").value.trim();
+ let table=document.getElementById("tableNo").value.trim();
+ let keys=Object.keys(cart).filter(k=>cart[k]>0);
+ if(!name||!table||!keys.length)return alert("نام، شماره میز و حداقل یک غذا را وارد کن.");
+ let total=keys.reduce((s,k)=>s+menu[k].price*cart[k],0);
+ let items=keys.map(k=>menu[k].name+" × "+cart[k]).join("، ");
+ orders.push({id:Date.now(),name,table,items,total,notes:document.getElementById("notes").value,date:new Date().toLocaleString("fa-IR")});
+ save();cart={};render();
+ alert("سفارش در این دستگاه ثبت شد.");
+}
+function finishOrder(id){
+ orders=orders.filter(o=>o.id!==id);save();render();
+}
+function cash(type){
+ let amount=Number(document.getElementById("cashAmount").value);
+ let note=document.getElementById("cashNote").value.trim();
+ if(amount<=0||!note)return alert("مبلغ و شرح را وارد کن.");
+ transactions.push({type,amount,note,date:new Date().toISOString()});
+ save();render();
+ document.getElementById("cashAmount").value="";
+ document.getElementById("cashNote").value="";
+}
+function backup(){
+ let data={menu,orders,transactions};
+ let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ let a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);a.download="jegarki-sirus-backup.json";a.click();
+ URL.revokeObjectURL(a.href);
+}
+function resetDemo(){
+ if(!confirm("تمام اطلاعات ذخیره‌شده این سایت پاک شود؟"))return;
+ localStorage.removeItem("js_menu");localStorage.removeItem("js_orders");localStorage.removeItem("js_cash");
+ location.reload();
+}
+render();
+</script>
+</body>
+</html>
+
