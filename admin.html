@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مدیریت جیگرکی سیروس</title>
+<style>
+body{margin:0;background:#111;color:#fff;font-family:Tahoma,Arial;padding:16px}
+header{background:linear-gradient(135deg,#8b160e,#ed6a18);padding:24px;border-radius:16px;text-align:center}
+section{background:#222;padding:16px;border-radius:14px;margin:14px 0}
+h2{color:#ffad65}
+input,button{box-sizing:border-box;width:100%;padding:12px;margin:6px 0;border:0;border-radius:9px;font:inherit}
+input{background:#111;color:white;border:1px solid #555}
+button{background:#e85d16;color:white;font-weight:bold}
+small{color:#ccc}
+</style>
+</head>
+<body>
+<header>
+<h1>🔥 مدیریت جیگرکی سیروس</h1>
+<p>پنل صاحب کسب‌وکار</p>
+</header>
+
+<section>
+<h2>🍢 افزودن غذا</h2>
+<input id="name" placeholder="نام غذا">
+<input id="price" type="number" placeholder="قیمت به تومان">
+<button onclick="addFood()">افزودن غذا</button>
+<div id="foods"></div>
+</section>
+
+<section>
+<h2>📦 سفارش‌ها</h2>
+<div id="orders">سفارش‌های ذخیره‌شده در این مرورگر در اینجا نمایش داده می‌شوند.</div>
+<small>این نسخه هنوز سفارش‌های گوشی مشتری را از اینترنت دریافت نمی‌کند.</small>
+</section>
+
+<section>
+<h2>💰 ثبت دخل و خرج</h2>
+<input id="amount" type="number" placeholder="مبلغ به تومان">
+<input id="desc" placeholder="شرح تراکنش">
+<button onclick="money('درآمد')">ثبت درآمد</button>
+<button onclick="money('هزینه')">ثبت هزینه</button>
+<div id="ledger"></div>
+</section>
+
+<script>
+let foods=JSON.parse(localStorage.getItem("js_menu")||"null")||[
+{name:"جگر سیخی",price:85000},
+{name:"دل سیخی",price:75000},
+{name:"نوشابه",price:25000}
+];
+let ledger=JSON.parse(localStorage.getItem("admin_ledger")||"[]");
+function save(){localStorage.setItem("js_menu",JSON.stringify(foods));localStorage.setItem("admin_ledger",JSON.stringify(ledger))}
+function render(){
+document.getElementById("foods").innerHTML=foods.map((f,i)=>`<p>${f.name} — ${Number(f.price).toLocaleString("fa-IR")} تومان <button onclick="edit(${i})">تغییر قیمت</button></p>`).join("");
+document.getElementById("ledger").innerHTML=ledger.map(x=>`<p>${x.type}: ${x.desc} — ${Number(x.amount).toLocaleString("fa-IR")} تومان</p>`).join("");
+let orders=JSON.parse(localStorage.getItem("js_orders")||"[]");
+document.getElementById("orders").innerHTML=orders.length?orders.map(o=>`<p>${o.name} | میز ${o.table} | ${o.items} | ${Number(o.total).toLocaleString("fa-IR")} تومان</p>`).join(""):"هنوز سفارشی در این مرورگر ثبت نشده.";
+}
+function addFood(){
+let name=document.getElementById("name").value.trim(),price=Number(document.getElementById("price").value);
+if(!name||price<=0)return alert("نام و قیمت را وارد کن");
+foods.push({name,price});save();render();document.getElementById("name").value="";document.getElementById("price").value="";
+}
+function edit(i){
+let p=prompt("قیمت جدید به تومان:",foods[i].price);
+if(p!==null&&Number(p)>0){foods[i].price=Number(p);save();render()}
+}
+function money(type){
+let amount=Number(document.getElementById("amount").value),desc=document.getElementById("desc").value.trim();
+if(amount<=0||!desc)return alert("مبلغ و شرح را وارد کن");
+ledger.push({type,amount,desc});save();render();
+document.getElementById("amount").value="";document.getElementById("desc").value="";
+}
+render();
+</script>
+</body>
+</html>
